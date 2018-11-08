@@ -140,3 +140,43 @@ def autoexit_command(debugger, command, result, internal_dict):
             debugger.HandleCommand('bt all')
             debugger.HandleCommand('continue')
             printBacktraceTime = time.time() + 5
+
+
+def jailbreakGo_command(debugger, command, result, internal_dict):
+    code_string = find_click_gobtn()
+    print(code_string)
+    res = lldb.SBCommandReturnObject()
+    debugger.GetCommandInterpreter().HandleCommand('expression -lobjc -O -- ' + code_string, res)
+    if res.GetError():
+        raise AssertionError(res.GetError())
+    elif not res.HasResult():
+        raise AssertionError('\\nno result. Womp womp....\\n')
+    returnVal = res.GetOutput()
+    result.AppendMessage(returnVal)
+
+
+def find_click_gobtn():
+    script = r'''
+        @import Foundation;
+        @import UIKit;
+        UITabBarController *tabVC = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+        UIViewController *vc = [tabVC selectedViewController];
+        UIButton *btn = [vc valueForKey:@\"goButton\"];
+        [vc performSelector:@selector(goButtonPressed:) withObject:btn];'''
+    return script
+
+
+def jailbreak_command(debugger, command, result, internal_dict):
+    excute_a_command(debugger, 'process interrupt')
+    excute_a_command(debugger, 'jailbreakGo')
+    excute_a_command(debugger, 'c')
+
+
+def excute_a_command(debugger, command):
+    res = lldb.SBCommandReturnObject()
+    debugger.GetCommandInterpreter().HandleCommand(command, res)
+    if res.GetError():
+        raise AssertionError(res.GetError())
+    elif not res.HasResult():
+        raise AssertionError('\\nno result. Womp womp....\\n')
+
